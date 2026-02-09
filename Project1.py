@@ -16,7 +16,8 @@ images_dir = Path(__file__).parent / "Office" / "Office"
 print(f"counting images in: {images_dir}")
 
 # gaus_var1 = input("enter gaussian variation 1: ")
-# gaus_var1 = input("enter gaussian variation 2: ")
+# gaus_var2 = input("enter gaussian variation 2: ")
+# gaus_var3 = input("enter gaussian variation 3: ")
 
 plt.ion()
 fig, ax = plt.subplots()
