@@ -1,67 +1,84 @@
 from pathlib import Path
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+import matplotlib.pyplot as plt
 
 
-#NOTES:
-#tried using cv2.imshow but im on windows and theres a backend GUI problem so i resorted to matplotlib
-#next step gaussian filters dont show up - threshold or std dev or calculation problem?
+# - SET PATH - 
+# please replace with path to folder of images! 
+# Currently set up to run as long as the zip folder was extracted in the same directory as the python file exists in 
 
-#to avoid redoing path every time one of us works on it 
-images_dir = Path(__file__).parent / "EnterExitCrossingPaths2cor" / "EnterExitCrossingPaths2cor"
-print(f"counting images in: {images_dir}")
-
-print("Please enter three desired standard deviations for a 1D gaussian derivative filter in increasing order. ")
-sigmaA = float(input("enter first std deviation value: "))
-sigmaB = float(input("enter second std deviation value: "))
-sigmaC = float(input("enter third std deviation value: "))
-
-def Gaussian_Derivative(std_deviation):
-    sigma = std_deviation
-    mu = 0
-    x = curr_img.astype(np.float32)
-    gauss = gauss = 1/(np.sqrt(2*np.pi)*sigma)*np.exp(-1*(x-mu)**2/(2*sigma**2))
-    gauss_derivative=-x/sigma**2*gauss
-    return gauss_derivative
-
-plt.ion()
+images_dir = Path(__file__).parent / "Office" / "Office"
 image_files = sorted(images_dir.glob("*.jpg"))
-first_img = cv2.imread(str(image_files[0]), cv2.IMREAD_GRAYSCALE)
-fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+print("number of images found:", len(image_files))
 
-titles = [
-    "Temporal Derivative",
-    f"Gaussian Derivative σ={sigmaA}",
-    f"Gaussian Derivative σ={sigmaB}",
-    f"Gaussian Derivative σ={sigmaC}"
-]
+# - USER INPUT - 
+print("\nPlease enter three standard deviations (tσ) for the temporal 1D Gaussian Derivative filter, in INCREASING order:")
+t1 = float(input("tσ 1: "))
+t2 = float(input("tσ 2: "))
+t3 = float(input("tσ 3: "))
 
-displays = []
-for ax, title in zip(axes.flat, titles):
-    im = ax.imshow(np.zeros_like(first_img), cmap='gray')
-    im.set_clim(0, 160)  #THRESHOLD - 80 is basically no noise 
-    ax.set_title(title)
-    ax.axis('off')
-    displays.append(im)
+# - FUNCTION DEFINITIONS - 
 
-for i in range(1, len(image_files)-1):
-    #print(image_files[i])
-    prev_img = cv2.imread(str(image_files[i-1]), cv2.IMREAD_GRAYSCALE) # loads in three sequential images 
-    curr_img = cv2.imread(str(image_files[i]), cv2.IMREAD_GRAYSCALE)
-    next_img = cv2.imread(str(image_files[i+1]), cv2.IMREAD_GRAYSCALE)
+# 1D gaussian
+def GaussianDeriv_1D(t_sigma):
+    r = int(np.ceil(3 * t_sigma))
+    t = np.arange(-r, r + 1, dtype=np.float32)
+    filt = -(t / (t_sigma ** 2)) * np.exp(-(t ** 2) / (2 * t_sigma ** 2))
+    filt = filt / (np.sum(np.abs(filt)) + 1e-12)
+    return filt.astype(np.float32), r
 
-    temporal_derivative = 0.5 * (next_img.astype(np.float32) - prev_img.astype(np.float32)) # thank you numpy for making this easy !!!
-    gdA = Gaussian_Derivative(sigmaA)
-    gdB = Gaussian_Derivative(sigmaB)
-    gdC = Gaussian_Derivative(sigmaC)
+def apply_Gaus1D(center_idx, filt, r):
+    acc = None
+    for offset in range(-r, r + 1):
+        img = cv2.imread(str(image_files[center_idx + offset]), cv2.IMREAD_GRAYSCALE).astype(np.float32)
+        w = filt[offset + r]
+        if acc is None:
+            acc = w * img  
+        else:
+            acc += w * img
+    return acc
 
-    displays[0].set_data(np.abs(temporal_derivative))
-    displays[1].set_data(np.abs(gdA))
-    displays[2].set_data(np.abs(gdB))
-    displays[3].set_data(np.abs(gdC))
+# - PART 1 -
 
-    fig.suptitle(f"Frame {i}", fontsize=14)
-    plt.pause(0.01) # change how fast the images are displaying, dont go much faster seems like cpu does not like. 
+print("PART 1 – Temporal Filter Comparison")
 
+f1, r1 = GaussianDeriv_1D(t1)
+f2, r2 = GaussianDeriv_1D(t2)
+f3, r3 = GaussianDeriv_1D(t3)
+
+max_r = max(r1, r2, r3, 1)
+
+plt.figure("PART 1 – Temporal Filter Comparison", figsize=(15, 6))
+plt.ion()
+
+for i in range(max_r, len(image_files) - max_r):
+
+    original = cv2.imread(str(image_files[i]), cv2.IMREAD_GRAYSCALE) #reading in grayscale 
+    original_f = original.astype(np.float32)
+
+    # 0.5[-1 0 1] temporal filter 
+    prev = cv2.imread(str(image_files[i - 1]), cv2.IMREAD_GRAYSCALE).astype(np.float32)
+    next = cv2.imread(str(image_files[i + 1]), cv2.IMREAD_GRAYSCALE).astype(np.float32)
+    simple = 0.5 * (next - prev)
+
+    # 1D gaussian derivative results
+    d1 = apply_Gaus1D(i, f1, r1)
+    d2 = apply_Gaus1D(i, f2, r2)
+    d3 = apply_Gaus1D(i, f3, r3)
+
+    plt.clf() # 0              1                    2                                     3                                       4
+    titles = ["Original", "0.5[-1 0 1]", f"1D Gaussian Derivative \n  tσ={t1}", f"1D Gaussian Derivative \n  tσ={t2}", f"1D Gaussian Derivative \n tσ={t3}"]
+           #    0           1                2           3         4
+    images = [original, np.abs(simple), np.abs(d1), np.abs(d2), np.abs(d3)]
+
+    for j in range(5):
+        plt.subplot(1, 5, j + 1)
+        plt.imshow(images[j], cmap="gray")
+        plt.title(titles[j])
+        plt.axis("off")
+
+    plt.pause(0.01)
+
+plt.ioff()
+plt.show()
