@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# - SET PATH - 
+# - SET PATH - -----------------------------------------------------------------------------------------------------------
 # please replace with path to folder of images! 
 # Currently set up to run as long as the zip folder was extracted in the same directory as the python file exists in 
 
@@ -27,7 +27,7 @@ s3 = float(input("sσ 3: "))
 k_values = [2.5, 4.0, 6.0]
 
 
-# - FUNCTION DEFINITIONS - 
+# - FUNCTION DEFINITIONS - ----------------------------------------------------------------------------------------------------------
 
 # 1D gaussian derivative 
 def GaussianDeriv_1D(t_sigma):
@@ -67,8 +67,7 @@ def threshold(grad_abs, k):
 all_images = [cv2.imread(str(f), cv2.IMREAD_GRAYSCALE).astype(np.float32) for f in image_files]
 
 
-# - PART 1 - ---------------------------------------------------------------------------------------------------------------------------------------------
-
+# - PART 1 - -----------------------------------------------------------------------------------------------------------------------
 print("PART 1 – Temporal Filter Comparison")
 
 f1, r1 = GaussianDeriv_1D(t1)
@@ -117,7 +116,7 @@ plt.ioff()
 plt.show()
 
 
-# - PART TWO - -----------------------------------------------------------------------------------------------------------------------------------------------
+# - PART TWO - -----------------------------------------------------------------------------------------------------------------------------------
 
 print("PART 2 – Spatial + Temporal Filter Comparison")
 
@@ -178,7 +177,7 @@ for i in range(max_r, len(all_images) - max_r):
 plt.ioff()
 plt.show()
 
-# - PART THREE - -----------------------------------------------------------------------------------------------------------------------------------------------
+# - PART THREE - -------------------------------------------------------------------------------------------------------------------------------------
 
 print("PART 3 – Threshold Comparison (3x3 Box + 0.5[-1,0,1])")
 
