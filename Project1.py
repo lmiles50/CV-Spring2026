@@ -3,10 +3,46 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+-----------------------Welcome to Project 1! -------------------------------------------
+
+Please start by !!!!!!!!!!!modifying the path!!!!!!!!!!!!! to the image folder below, under SET PATH. Then run
+
+Enter desired standard deviations. Those used in the report are 0.8, 1.5, and 3 for both t and s, in increasing order. 
+
+- First Window 
+you will see only the results of each temporal derivative filter, labelled. 
+To advance to the next part, x out of the window. 
+
+- Second Window
+you will see every combination of spatial filter and temporal filter. 
+The columns of the grid are labelled. The rows from top to bottom show:
+            the original image
+            0.5[-1 0 1]
+            1D gaussian derivative with std dev of 0.8
+            1D gaussian derivative with std dev of 1.5
+            1D gaussian derivative with std dev of 3
+again, x out of the window to advance to the next part
+
+- Third Window
+the best temporal filter and spatial filter combination was determined visually, then adaptive thresholding was applied. 
+You will see the results of three different values of k, which can be adjusted in the USER INPUT section of the code. 
+x out of the window to end the program. 
+
+-------------------Please email if there are any questions or concerns ----------------------------
+
+miles.l@northeastern.edu
+shen.mat@northeastern.edu
+"""
+
+
 
 # - SET PATH - -----------------------------------------------------------------------------------------------------------
-# please replace with path to folder of images! 
 # Currently set up to run as long as the zip folder was extracted in the same directory as the python file exists in 
+# please replace images_dir with path to folder of images! Make sure it is a path object. For example:
+
+#images_dir = Path("C:/Users/lilym/Desktop/CV-Spring2026/RedChair/RedChair/")
+
 
 images_dir = Path(__file__).parent / "Office" / "Office"
 image_files = sorted(images_dir.glob("*.jpg"))
@@ -91,6 +127,7 @@ for i in range(max_r, len(all_images) - max_r):
     simple = 0.5 * (next - prev)
 
     # 1D gaussian derivative results
+
     d1 = apply_GausDeriv1D_stack(all_images[i - r1:i + r1 + 1], f1)
     d2 = apply_GausDeriv1D_stack(all_images[i - r2:i + r2 + 1], f2)
     d3 = apply_GausDeriv1D_stack(all_images[i - r3:i + r3 + 1], f3)
